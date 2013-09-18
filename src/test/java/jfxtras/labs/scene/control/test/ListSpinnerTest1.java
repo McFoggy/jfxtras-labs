@@ -83,7 +83,7 @@ public class ListSpinnerTest1 {
         Wrap lIncArrowWrapper = lSpinnerWrapper.as(org.jemmy.interfaces.Parent.class, Node.class).lookup(new ByStyleClass<Node>("right-arrow")).wrap();
         
         // check to see what the current value is
-        Assert.assertEquals("a", lSpinnerWrapper.getControl().getValue());
+        Assert.assertEquals("d", lSpinnerWrapper.getControl().getValue());
 
         // select next
 		lIncArrowWrapper.mouse().click(1);
