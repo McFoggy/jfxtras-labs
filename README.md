@@ -2,6 +2,7 @@ JFXtras-labs
 ============
 _A project for experimenting with new controls and other useful JavaFX extensions_
 [![Build Status](https://travis-ci.org/McFoggy/jfxtras-labs.png)](https://travis-ci.org/McFoggy/jfxtras-labs)
+[![Build Status](https://travis-ci.org/JFXtras/jfxtras-labs.png)](https://travis-ci.org/JFXtras/jfxtras-labs)
 
 Java version
 --------------------
