@@ -42,6 +42,11 @@ public class ZoomOutButtonFactory extends ZoomButtonFactory {
     public ZoomOutButtonFactory(Zoomable controlable) {
         super(controlable);
     }
+    
+    @Override
+	protected String getId() {
+		return "btnZoomOut";
+	}
 
     @Override
     protected String getImagePath() {
@@ -53,7 +58,9 @@ public class ZoomOutButtonFactory extends ZoomButtonFactory {
         return new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                zoomable.zoomOut();
+            	int val = zoomable.zoomProperty().get();
+//                zoomable.updateZoom(val - 1);
+            	zoomable.zoomProperty().set(val - 1);
             }
         };
     }

@@ -40,20 +40,22 @@ import javafx.beans.property.SimpleIntegerProperty;
  */
 public interface Zoomable {
 	
-    int getMinZoom();
+    SimpleIntegerProperty minZoomProperty();
     
-    int getMaxZoom();
+    SimpleIntegerProperty maxZoomProperty();
     
     SimpleIntegerProperty zoomProperty();
     
-    void setZoom(int zoom);
-
-    void zoomIn();
-
+    /**
+     * zoom in at specific point
+     * @param point
+     */
     void zoomIn(Point point);
 
-    void zoomOut();
-    
+    /**
+     * zoom out at specific point
+     * @param point
+     */
     void zoomOut(Point mapPoint);
     
 }

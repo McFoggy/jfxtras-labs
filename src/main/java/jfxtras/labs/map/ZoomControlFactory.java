@@ -32,7 +32,6 @@ package jfxtras.labs.map;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.Button;
-import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -46,22 +45,30 @@ import javafx.scene.layout.VBox;
  */
 public class ZoomControlFactory {
 
+	private static final int GAP = 5;
+
 	private static final String ZOOM_LEVEL = "Zoom to level ";
 
 	protected Zoomable zoomable;
 
-	private Slider zoomSlider;
+	private ZoomSlider zoomSlider;
 
 	private Button zoomInButton;
 
 	private Button zoomOutButton;
+	
+	private boolean ignore;
 
 	public Pane create(Zoomable zoomable) {
 		
 		this.zoomable = zoomable;
 
-		ZoomSliderFactory zoomSliderFactory = new ZoomSliderFactory(zoomable);
-		zoomSlider = zoomSliderFactory.create();
+		zoomSlider = new ZoomSlider(zoomable);
+		
+		zoomSlider.valueProperty().addListener(new ZoomSliderChangeListener(zoomable));
+		
+		zoomable.minZoomProperty().addListener(new ZoomMinChangeListener());
+		zoomable.maxZoomProperty().addListener(new ZoomMaxChangeListener());
 
 		ZoomButtonFactory zoomButtonFactory = new ZoomInButtonFactory(zoomable);
 		zoomInButton = zoomButtonFactory.create();
@@ -70,10 +77,11 @@ public class ZoomControlFactory {
 		zoomOutButton = zoomButtonFactory.create();
 		
 		setTooltip(zoomable.zoomProperty().get());
+		updateButtons(zoomable.zoomProperty().get());
 		
 		zoomable.zoomProperty().addListener(new ZoomChangeListener());
 
-		Pane pane = new VBox();
+		Pane pane = new VBox(GAP);
 		pane.getChildren().add(zoomInButton);
 		pane.getChildren().add(zoomSlider);
 		pane.getChildren().add(zoomOutButton);
@@ -89,6 +97,11 @@ public class ZoomControlFactory {
 		zoomInButton.setTooltip(new Tooltip(ZOOM_LEVEL + (zoom + 1)));
 		zoomOutButton.setTooltip(new Tooltip(ZOOM_LEVEL + (zoom - 1)));
 	}
+	
+	private void updateButtons(int zoom) {
+		zoomOutButton.setDisable(!(zoom > zoomable.minZoomProperty().get()));
+		zoomInButton.setDisable(!(zoom < zoomable.maxZoomProperty().get()));
+	}
 
 	private class ZoomChangeListener implements ChangeListener<Number> {
 
@@ -101,14 +114,57 @@ public class ZoomControlFactory {
 			
 			setTooltip(zoom);
 			
-			zoomOutButton.setDisable(!(zoom > zoomable.getMinZoom()));
-			zoomInButton.setDisable(!(zoom < zoomable.getMaxZoom()));
+			updateButtons(zoom);
 
 			if (Math.abs(zoomSlider.getValue() - zoom) > ZOOM_DIFF) {
+				ignore = true;
 				zoomSlider.setValue(zoom);
+				ignore = false;
 			}
 		}
+	}
+	
+	private class ZoomMinChangeListener implements ChangeListener<Number> {
 
+		@Override
+		public void changed(ObservableValue<? extends Number> ov,
+				Number oldVal, Number newVal) {
+			ignore = true;
+			double min = newVal.doubleValue();
+			zoomSlider.adjustScale(min, zoomSlider.getMax());
+			zoomSlider.setMin(min);
+			ignore = false;
+		}
+	}
+	
+	private class ZoomMaxChangeListener implements ChangeListener<Number> {
+		
+		@Override
+		public void changed(ObservableValue<? extends Number> ov,
+				Number oldVal, Number newVal) {
+			ignore = true;
+			double max = newVal.doubleValue();
+			zoomSlider.adjustScale(zoomSlider.getMin(), max);
+			zoomSlider.setMax(max);
+			ignore = false;
+		}
+	}
+	
+	private class ZoomSliderChangeListener implements ChangeListener<Number> {
+		
+		private Zoomable zoomable;
+		
+		public ZoomSliderChangeListener(Zoomable zoomable) {
+			this.zoomable = zoomable;
+		}
+		
+        @Override
+        public void changed(ObservableValue<? extends Number> ov, Number oldVal, Number newVal) {
+            if(!ignore){
+            	int newZoom = newVal.intValue();
+ 				zoomable.zoomProperty().set(newZoom);
+            }
+        }
 	}
 
 }

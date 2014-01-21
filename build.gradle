@@ -45,8 +45,11 @@ if (!project.plugins.findPlugin(eu.mihosoft.vrl.vlicenseheaderutil.gradle.VLicen
 }
 
 repositories {
-    mavenRepo urls: "https://oss.sonatype.org/content/repositories/snapshots/"
     mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    
 }
 
 
@@ -87,4 +90,8 @@ uploadArchives.onlyIf {
 task copyToLib(type: Copy) {
     into "_lib"
     from configurations.testCompile
+}
+
+test {
+	systemProperty 'tiles.source', "${project.buildDir}/resources/test/jfxtras/labs/map/tile"
 }

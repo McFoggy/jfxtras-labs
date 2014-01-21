@@ -42,18 +42,25 @@ public class ZoomInButtonFactory extends ZoomButtonFactory {
     public ZoomInButtonFactory(Zoomable controlable) {
         super(controlable);
     }
+    
+	@Override
+	protected String getId() {
+		return "btnZoomIn";
+	}
 
     @Override
     protected String getImagePath() {
         return "plus.png";
     }
-
+    
     @Override
     protected EventHandler<ActionEvent> getEventHandler() {
         return new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                zoomable.zoomIn();
+            	int val = zoomable.zoomProperty().get();
+                //zoomable.updateZoom(val + 1);
+            	zoomable.zoomProperty().set(val + 1);
             }
         };
     }

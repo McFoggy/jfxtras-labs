@@ -1,5 +1,5 @@
 /**
- * ZoomSliderFactory.java
+ * BingAttributionLoaderTest.java
  *
  * Copyright (c) 2011-2013, JFXtras
  * All rights reserved.
@@ -27,46 +27,52 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package jfxtras.labs.map;
+package jfxtras.labs.map.tile.bing;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.Orientation;
-import javafx.scene.control.Slider;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
+import jfxtras.labs.JavaFXPlatformAbstractTest;
+import jfxtras.labs.map.ApiKeys;
+import jfxtras.labs.map.tile.Attribution;
+
+import org.junit.Test;
 
 /**
- * Factory for the zoom slider.
  *
  * @author Mario Schroeder
  */
-public class ZoomSliderFactory {
+public class BingAttributionLoaderTest extends JavaFXPlatformAbstractTest {
+    /**
+     * Test of load method, of class BingAttributionLoader.
+     */
+    @Test
+    public void testLoadMapMetadata() {
 
-    private Zoomable zoomable;
+        BingMetaDataHandler handler = new BingMapMetaDataHandler(ApiKeys.Bing.toString());
 
-    public ZoomSliderFactory(Zoomable zoomable) {
-        this.zoomable = zoomable;
+        BingAttributionLoader classUnderTest = new BingAttributionLoader(handler);
+        List<Attribution> result = classUnderTest.load();
+        assertNotNull(result);
+        assertEquals(2, result.size());
     }
 
-    protected Slider create() {
-        Slider slider = new Slider();
-        slider.setOrientation(Orientation.VERTICAL);
-        slider.setShowTickLabels(true);
-        slider.setShowTickMarks(true);
-        slider.setMajorTickUnit(1.0);
-        
-        slider.setValue(zoomable.zoomProperty().get());
-        slider.setMin(zoomable.getMinZoom());
-        slider.setMax(zoomable.getMaxZoom());
+    /**
+     * Test of load method, of class BingAttributionLoader.
+     */
+    @Test
+    public void testLoadImageMetadata() {
 
-        slider.setPrefSize(30, 150);
+        BingMetaDataHandler handler = new BingImageMetaDataHandler(ApiKeys.Bing.toString());
 
-        slider.valueProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
-                zoomable.setZoom(new_val.intValue());
-            }
-        });
-
-        return slider;
+        BingAttributionLoader classUnderTest = new BingAttributionLoader(handler);
+        List<Attribution> result = classUnderTest.load();
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertTrue(result.size() > 2);
     }
 }

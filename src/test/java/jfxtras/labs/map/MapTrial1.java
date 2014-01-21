@@ -1,5 +1,5 @@
 /**
- * ListSpinnerTest1App.java
+ * MapTrial1.java
  *
  * Copyright (c) 2011-2013, JFXtras
  * All rights reserved.
@@ -27,39 +27,57 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package jfxtras.labs.scene.control.test;
+package jfxtras.labs.map;
 
-import java.awt.AWTException;
+import java.io.File;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import jfxtras.labs.scene.control.ListSpinner;
-import jfxtras.labs.util.StringConverterFactory;
+import jfxtras.labs.map.tile.TileSource;
+import jfxtras.labs.map.tile.TileSourceFactory;
+import jfxtras.labs.map.tile.local.LocalTileSourceFactory;
 
-public class ListSpinnerTest1App  extends Application {
-    public static void main(String[] args) throws AWTException {
-        launch(args);
-    }
+/**
+ * 
+ * @author Mario Schroeder
+ */
+public class MapTrial1 extends Application {
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        VBox box = new VBox();
-        Scene scene = new Scene(box);
+	public static void main(String[] args) {
+		Application.launch(MapTrial1.class, args);
+	}
 
-        ListSpinner<String> lSpinner = new ListSpinner<String>("a", "b", "c")
-        		.withEditable(true).withStringConverter(StringConverterFactory.forString())
-				.withCyclic(true)
-				;
-        
-        box.getChildren().add(lSpinner);
+	@Override
+	public void start(Stage stage) throws Exception {
+		Parent root = FXMLLoader.load(getClass().getResource("MapTrial1.fxml"), null,
+				new MapBuilderFactory());
+		
+		MapPane map = (MapPane) root.lookup("#map");
+		
+		TileSourceFactory<String> factory = new LocalTileSourceFactory();
+		
+		String rootDir = getClass().getResource("tile").getFile();
+		String propTiles = System.getProperty("tiles.source");
+		if(propTiles != null && !propTiles.trim().isEmpty()){
+			rootDir = propTiles;
+		}
+		File dir = new File(rootDir, "tiles");
+		TileSource tileSource = factory.create(dir.getPath());
+		map.setTileSource(tileSource);
+		
+		map.setDisplayPositionByLatLon(52.4, 5.9);
+		map.zoomProperty().set(7);
 
-        stage.setScene(scene);
+		Scene scene = new Scene(root);
+		
+		stage.setTitle("Map Trial 1");
+		
+		stage.setScene(scene);
+		stage.show();
+		
+	}
 
-        stage.setWidth(300);
-        stage.setHeight(300);
-
-        stage.show();
-    }
 }

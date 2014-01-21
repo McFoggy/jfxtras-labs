@@ -32,7 +32,10 @@ package jfxtras.labs.internal.scene.control.skin;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -114,7 +117,7 @@ abstract public class CalendarPickerMonthlySkinAbstract<S> extends SkinBase<Cale
 		displayedCalendarObjectProperty.setValue(derriveDisplayedCalendar(value)); 
 	}
 	public S withDisplayedCalendar(Calendar value) { setDisplayedCalendar(value); return (S)this; } 
-	private Calendar derriveDisplayedCalendar(Calendar lDisplayedCalendar)
+	protected Calendar derriveDisplayedCalendar(Calendar lDisplayedCalendar)
 	{
 		// done
 		if (lDisplayedCalendar == null) return null;
@@ -133,6 +136,9 @@ abstract public class CalendarPickerMonthlySkinAbstract<S> extends SkinBase<Cale
 		return lCalendar;
 	}
 
+	/**
+	 * 
+	 */
 	private void refreshLocale()
 	{
 		// create the formatter to use
@@ -147,6 +153,50 @@ abstract public class CalendarPickerMonthlySkinAbstract<S> extends SkinBase<Cale
 	
 	// ==================================================================================================================
 	// SUPPORT
+
+	/**
+	 * 
+	 */
+	protected void calendarRangeCallback()
+	{
+		if (getSkinnable().calendarRangeCallbackProperty().get() != null) {
+			// start and end
+			Calendar lStartCalendar = periodStartCalendar(); 
+			Calendar lEndCalendar = periodEndCalendar();
+			try
+			{
+				calendarRangeCallbackAtomicInteger.incrementAndGet();
+				getSkinnable().calendarRangeCallbackProperty().get().call(new CalendarPicker.CalendarRange(lStartCalendar, lEndCalendar));
+			}
+			finally
+			{
+				calendarRangeCallbackAtomicInteger.decrementAndGet();
+			}
+		}
+	}
+	protected final AtomicInteger calendarRangeCallbackAtomicInteger = new AtomicInteger(0);
+
+	/**
+	 * 
+	 * @return
+	 */
+	protected Calendar periodStartCalendar()
+	{
+		return (Calendar)getDisplayedCalendar().clone();
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	protected Calendar periodEndCalendar()
+	{
+		Calendar lEndCalendar = (Calendar)getDisplayedCalendar().clone();
+		lEndCalendar.add(java.util.Calendar.MONTH, 1);
+		lEndCalendar.set(java.util.Calendar.DATE, 1);
+		lEndCalendar.add(java.util.Calendar.DATE, -1);
+		return lEndCalendar;				
+	}
 	
 	/**
 	 * get the weekday labels starting with the weekday that is the first-day-of-the-week according to the locale in the displayed calendar
