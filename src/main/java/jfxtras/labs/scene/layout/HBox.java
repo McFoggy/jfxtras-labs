@@ -8,14 +8,20 @@ import javafx.scene.Node;
 /**
  * A drop-in replacement for JavaFX's HBox using layout constraints.
  * So instead of:
- * 	HBox lHBox = new HBox(5.0);		
+ * [source,java]
+ * --
+ * 	HBox lHBox = new HBox(5.0);
  * 	Button b1 = new Button("short");
  * 	lHBox.getChildren().add(b1);
- * 	HBox.setHgrow(b1, Priority.ALWAYS); 
+ * 	HBox.setHgrow(b1, Priority.ALWAYS);
+ * --
  *
  * You can write:
- * 	HBox lHBox = new HBox(5.0);		
- *  lHBox.add(new Button("short"), new HBox.C().hgrow(Priority.ALWAYS));
+ * [source,java]
+ * --
+ * 	HBox lHBox = new HBox(5.0);
+ *	lHBox.add(new Button("short"), new HBox.C().hgrow(Priority.ALWAYS));
+ * --
  *
  * This class is not a reimplementation of HBox, but only applies a different API.
  *   

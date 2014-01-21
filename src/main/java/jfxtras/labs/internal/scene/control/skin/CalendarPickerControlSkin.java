@@ -95,70 +95,41 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 		
 		// start listening to changes
 		// if the calendar changes, the display calendar will jump to show that
-		getSkinnable().calendarProperty().addListener(new InvalidationListener()
-		{
-			
-			@Override
-			public void invalidated(Observable arg0)
-			{
-				if (getSkinnable().getCalendar() != null) 
-				{
-					setDisplayedCalendar(getSkinnable().getCalendar());
-				}
-			} 
+		getSkinnable().calendarProperty().addListener( (InvalidationListener) observable -> {
+			if (getSkinnable().getCalendar() != null) {
+				getSkinnable().setDisplayedCalendar(getSkinnable().getCalendar());
+			}
 		});
-		if (getSkinnable().getCalendar() != null) 
-		{
-			setDisplayedCalendar(getSkinnable().getCalendar());
+		if (getSkinnable().getCalendar() != null) {
+			getSkinnable().setDisplayedCalendar(getSkinnable().getCalendar());
 		}
 		
 		// if the calendars change, the selection must be refreshed
-		getSkinnable().calendars().addListener(new ListChangeListener<Calendar>()  
-		{
-			@Override
-			public void onChanged(javafx.collections.ListChangeListener.Change<? extends Calendar> arg0)
-			{
-				refreshDayButtonToggleState();
-			} 
+		getSkinnable().calendars().addListener( (InvalidationListener) observable -> {
+			refreshDayButtonToggleState();
 		});
 		
-		// if the displayed calendar changes, the screen must be refreshed
-		displayedCalendar().addListener(new InvalidationListener()
-		{
-			@Override
-			public void invalidated(Observable arg0)
-			{
-				refresh();
-			} 
-		});
-
         // react to changes in the locale
-        getSkinnable().localeProperty().addListener(new InvalidationListener() {
-            @Override
-            public void invalidated(Observable observable) {
-                monthListSpinner.setItems(FXCollections.observableArrayList(getMonthLabels()));
+        getSkinnable().localeProperty().addListener( (InvalidationListener) observable -> {
+			monthListSpinner.setItems(FXCollections.observableArrayList(getMonthLabels()));
 
-                // force change the locale in the displayed calendar
-                displayedCalendar().set(derriveDisplayedCalendar(getDisplayedCalendar()));
-                refresh();
-            }
+			// force change the locale in the displayed calendar
+			getSkinnable().displayedCalendar().set( (Calendar)getSkinnable().getDisplayedCalendar().clone() );
+			refresh();
         });
 
         // react to changes in the locale
-        getSkinnable().showTimeProperty().addListener(new InvalidationListener() {
-            @Override
-            public void invalidated(Observable observable) {
-                layoutNodes();
-            }
+        getSkinnable().showTimeProperty().addListener( (InvalidationListener) observable -> {
+            layoutNodes();
         });
 
         // react to changes in the disabled calendars
-        getSkinnable().disabledCalendars().addListener(new ListChangeListener<Calendar>(){
+        getSkinnable().disabledCalendars().addListener( new ListChangeListener<Calendar>(){
 			@Override
-			public void onChanged(javafx.collections.ListChangeListener.Change<? extends Calendar> arg0) {
+			public void onChanged(javafx.collections.ListChangeListener.Change<? extends Calendar> change) {
 				refreshDayButtonsVisibilityAndLabel();
 			}
-        });
+	    });
         
         // react to changes in the highlighted calendars
         getSkinnable().highlightedCalendars().addListener(new ListChangeListener<Calendar>(){
@@ -166,22 +137,43 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 			public void onChanged(javafx.collections.ListChangeListener.Change<? extends Calendar> arg0) {
 				refreshDayButtonsVisibilityAndLabel();
 			}
-        });
-        
-        // update the data
+   	     });
+
+		// react to changes in the displayed calendar
+		getSkinnable().displayedCalendar().addListener( (InvalidationListener) observable -> {
+			refresh();
+		});
+
+		// update the data
 		refresh();
 	}
 	
 	// ==================================================================================================================
 	// PROPERTIES
-	
+
+	/**
+	 * This skin has the displayed date always pointing to the first of the month
+	 * @param displayedCalendar
+	 * @return
+	 */
+	protected Calendar deriveDisplayedCalendar(Calendar displayedCalendar)
+	{
+		// always the 1st of the month, without time
+		Calendar lCalendar = Calendar.getInstance(getSkinnable().getLocale());
+		lCalendar.set(Calendar.DATE, 1);
+		lCalendar.set(Calendar.MONTH, displayedCalendar.get(Calendar.MONTH));
+		lCalendar.set(Calendar.YEAR, displayedCalendar.get(Calendar.YEAR));
+		lCalendar.set(Calendar.HOUR_OF_DAY, 0);
+		lCalendar.set(Calendar.MINUTE, 0);
+		lCalendar.set(Calendar.SECOND, 0);
+		lCalendar.set(Calendar.MILLISECOND, 0);
+		return lCalendar;
+	}
+
 	// ==================================================================================================================
 	// StyleableProperties
 	
 	/** ShowWeeknumbers: */
-    /**
-     * showWeeknumbers
-     */
     public final ObjectProperty<ShowWeeknumbers> showWeeknumbersProperty()
     {
         if (showWeeknumbers == null)
@@ -354,6 +346,7 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 		{
 			// create buttons
 			ToggleButton lToggleButton = new ToggleButton("" + i);
+			lToggleButton.setId("day" + i);
 			lToggleButton.getStyleClass().add("day-button");
 			lToggleButton.selectedProperty().addListener(toggleButtonSelectedPropertyChangeListener); // for minimal memory usage, use a single listener
 			lToggleButton.onMouseReleasedProperty().set(toggleButtonMouseReleasedPropertyEventHandler); // for minimal memory usage, use a single listener
@@ -550,9 +543,9 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 		int lDayOfMonth = lDayToggleButtonIdx - lFirstOfMonthIdx + 1;
 
 		// create calendar representing the date that was toggled
-		Calendar lToggledCalendar = (Calendar)getDisplayedCalendar().clone();
-		lToggledCalendar.set(Calendar.YEAR, getDisplayedCalendar().get(Calendar.YEAR));
-		lToggledCalendar.set(Calendar.MONTH, getDisplayedCalendar().get(Calendar.MONTH));
+		Calendar lToggledCalendar = (Calendar)getSkinnable().getDisplayedCalendar().clone();
+		lToggledCalendar.set(Calendar.YEAR, getSkinnable().getDisplayedCalendar().get(Calendar.YEAR));
+		lToggledCalendar.set(Calendar.MONTH, getSkinnable().getDisplayedCalendar().get(Calendar.MONTH));
 		lToggledCalendar.set(Calendar.DATE, lDayOfMonth);
 		
 		// include time
@@ -581,52 +574,39 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 		Calendar lFoundCalendar = find(lCalendars, lToggledCalendar); // find solely on YMD not HMS 
 		if (lFoundCalendar == null) // if not found 
 		{
-			// only add if not present
-			lCalendars.add(lToggledCalendar);
-			
 			// make sure it adheres to the mode
 			// SINGLE: clear all but the last selected
-			while (getSkinnable().getMode() == CalendarPicker.Mode.SINGLE && lCalendars.size() > 1) 
-			{
-				lCalendars.remove(0);
-			}
-			// MULTIPLE: do nothing, just add the new one
-			//           if shift is pressed, behave like RANGE below
-			while (getSkinnable().getMode() == CalendarPicker.Mode.SINGLE && lCalendars.size() > 1) 
-			{
-				lCalendars.remove(0);
-			}
 			// RANGE: if shift is not pressed, behave like single
-			//        if shift is pressed, also add the dates between 
-			while (getSkinnable().getMode() == CalendarPicker.Mode.RANGE && shiftIsPressed == false && lCalendars.size() > 1) 
-			{
-				lCalendars.remove(0);
+			if ( getSkinnable().getMode() == CalendarPicker.Mode.SINGLE 
+			  || (getSkinnable().getMode() == CalendarPicker.Mode.RANGE && shiftIsPressed == false)
+			   ) {
+				while (lCalendars.size() > 0) {
+					lCalendars.remove(0);
+				}
+				lCalendars.add(lToggledCalendar);
 			}
-			if ((getSkinnable().getMode() == CalendarPicker.Mode.MULTIPLE || getSkinnable().getMode() == CalendarPicker.Mode.RANGE) && shiftIsPressed == true) 
-			{
-				// we muust have a last selected			
+			if ( getSkinnable().getMode() == CalendarPicker.Mode.MULTIPLE  && shiftIsPressed == false ) {
+				lCalendars.add(lToggledCalendar);
+			}
+			if ( (getSkinnable().getMode() == CalendarPicker.Mode.MULTIPLE || getSkinnable().getMode() == CalendarPicker.Mode.RANGE) 
+			  && shiftIsPressed == true
+			   ) {
+				// we must have a last selected
 				if (iLastSelected != null) 
 				{
 					// get the other calendar and make sure other <= toggle
 					Calendar lOtherCalendar = iLastSelected;
-					if (lOtherCalendar.after(lToggledCalendar))
-					{
-						Calendar lSwap = lOtherCalendar;
-						lOtherCalendar = lToggledCalendar;
-						lToggledCalendar = lSwap;
-					}
+					int lDirection = (lOtherCalendar.after(lToggledCalendar) ? -1 : 1);
 					
 					// walk towards the toggled date and add all in between
 					Calendar lWalker = (Calendar)lOtherCalendar.clone(); // the @#$#@$@# calendars are mutable
-					lWalker.add(Calendar.DATE, 1);
-					while (lWalker.before(lToggledCalendar))
+					lWalker.add(Calendar.DATE, lDirection);
+					while (lWalker.equals(lToggledCalendar) == false)
 					{
 						lCalendars.add((Calendar)lWalker.clone()); // the @#$#@$@# calendars are mutable
-						lWalker.add(Calendar.DATE, 1);
+						lWalker.add(Calendar.DATE, lDirection);
 					}
-					
-					// let's have a nice collection
-					Collections.sort(lCalendars);
+					lCalendars.add(lToggledCalendar);
 				}
 			}
 			
@@ -655,12 +635,12 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 		int lMonth = monthListSpinner.getIndex();
 		
 		// get new calendar to display
-		Calendar lCalendar = (Calendar)getDisplayedCalendar().clone();
+		Calendar lCalendar = (Calendar)getSkinnable().getDisplayedCalendar().clone();
 		lCalendar.set(Calendar.YEAR, lYear);
 		lCalendar.set(Calendar.MONTH, lMonth);
 		
 		// set it
-		setDisplayedCalendar(lCalendar);
+		getSkinnable().setDisplayedCalendar(lCalendar);
 	}
 	
 
@@ -673,18 +653,18 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 		Calendar lTodayCalendar = Calendar.getInstance();
 		
 		// get new calendar to display
-		Calendar lCalendar = (Calendar)getDisplayedCalendar().clone();
+		Calendar lCalendar = (Calendar)getSkinnable().getDisplayedCalendar().clone();
 		lCalendar.set(Calendar.YEAR, lTodayCalendar.get(Calendar.YEAR));
 		lCalendar.set(Calendar.MONTH, lTodayCalendar.get(Calendar.MONTH));
 		
 		// set it
-		setDisplayedCalendar(lCalendar);
+		getSkinnable().setDisplayedCalendar(lCalendar);
 	}
 	
 	/**
 	 * refresh all
 	 */
-	private void refresh()
+	protected void refresh()
 	{
 		calendarRangeCallback();
 		refreshSpinner();
@@ -703,7 +683,7 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 		if (calendarRangeCallbackAtomicInteger.get() !=0) return;
 		
 		// get calendar
-		Calendar lCalendar = (Calendar)getDisplayedCalendar();
+		Calendar lCalendar = (Calendar)getSkinnable().getDisplayedCalendar();
 
 		// get the value for the corresponding index and set that
 		List<String> lMonthLabels = getMonthLabels();
@@ -784,7 +764,7 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 		
 		// set the month buttons
 		int lDaysInMonth = determineDaysInMonth();
-		Calendar lCalendar = (Calendar)getDisplayedCalendar().clone();
+		Calendar lCalendar = (Calendar)getSkinnable().getDisplayedCalendar().clone();
 		for (int i = 1; i <= lDaysInMonth; i++)
 		{
 			// set the date
@@ -797,32 +777,25 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 			ToggleButton lToggleButton = dayButtons.get(lIdx); 
 			lToggleButton.setVisible(true);
 			lToggleButton.setText("" + i);
-			lToggleButton.getStyleClass().remove("weekend");
-			lToggleButton.getStyleClass().remove("weekday");
+			lToggleButton.getStyleClass().removeAll("weekend", "weekday");
 			lToggleButton.getStyleClass().add(isWeekdayWeekend(lIdx % 7) ? "weekend" : "weekday"); 
-			lToggleButton.setDisable( disabledCalendars != null && disabledCalendars.contains(lCalendar) );
+			lToggleButton.setDisable( disabledCalendars != null && find(disabledCalendars, lCalendar) != null );
 			
 			// make the corresponding weeklabel visible
 			weeknumberLabels.get(lIdx / 7).setVisible(true);
 
 			// highlight today
+			lToggleButton.getStyleClass().remove("today");
 			if (isToday(lCalendar))
 			{
 				lToggleButton.getStyleClass().add("today");
 			}	
-			else
-			{
-				lToggleButton.getStyleClass().remove("today");
-			}
-			
-			// highligh
-			if (highlightedCalendars != null && highlightedCalendars.contains(lCalendar))
+
+			// highlight
+			lToggleButton.getStyleClass().remove("highlight");
+			if (highlightedCalendars != null && find(highlightedCalendars, lCalendar) != null)
 			{
 				lToggleButton.getStyleClass().add("highlight");
-			}
-			else
-			{
-				lToggleButton.getStyleClass().remove("highlight");
 			}
 		}
 
@@ -851,7 +824,7 @@ public class CalendarPickerControlSkin extends CalendarPickerMonthlySkinAbstract
 			
 			// set the month buttons
 			int lDaysInMonth = determineDaysInMonth();
-			Calendar lCalendar = (Calendar)getDisplayedCalendar().clone();
+			Calendar lCalendar = (Calendar)getSkinnable().getDisplayedCalendar().clone();
 			for (int i = 1; i <= lDaysInMonth; i++)
 			{
 				// set the date

@@ -237,7 +237,10 @@ public class ListSpinner<T> extends Control
 	
 	// ==================================================================================================================
 	// PROPERTIES
-	
+
+	/** Id */
+	public ListSpinner<T> withId(String value) { setId(value); return this; }
+
 	/** Value: */
 	public ObjectProperty<T> valueProperty() { return this.valueObjectProperty; }
 	final private ObjectProperty<T> valueObjectProperty = new SimpleObjectProperty<T>(this, "value", null)
@@ -411,11 +414,16 @@ public class ListSpinner<T> extends Control
 	static public class CycleEvent extends Event
 	{
 		/**
+		 * The only valid EventType for the CycleEvent.
+		 */
+		public static final EventType<CycleEvent> CYCLE = new EventType<CycleEvent>(Event.ANY, "CYCLE");
+
+		/**
 		 * 
 		 */
 		public CycleEvent()
 		{
-			super(new EventType<CycleEvent>());
+			super(CYCLE);
 		}
 
 		/**

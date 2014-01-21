@@ -9,14 +9,20 @@ import javafx.scene.Node;
 /**
  * A drop-in replacement for JavaFX's GridPane using layout constraints for the nodes.
  * You should still use the RowConstraints(Builder) and ColumnConstraints(Builder)
- * 
+ *
  * So instead of writing:
+ * [source,java]
+ * --
  *   Text t = new Text("Services");
  *   grid.add(t, 3, 2);
  *   GridPane.valignment(t, VPos.TOP));
- * 
+ * --
+ *
  * You can write:
+ * [source,java]
+ * --
  *   grid.add(new Text("Services"), new GridPane.C().col(3).row(2).valignment(VPos.TOP));
+ * --
  *
  * This class is not a reimplementation of GridPane, but only applies a different API.
  *   
@@ -95,8 +101,19 @@ public class GridPane extends javafx.scene.layout.GridPane
 		super.setPadding(value);
 		return this;
 	}
-	
-	
+
+	/**
+	 *
+	 * @param value
+	 * @return
+	 */
+	public GridPane withGridLinesVisible(boolean value)
+	{
+		super.setGridLinesVisible(value);
+		return this;
+	}
+
+
 	// ========================================================================================================================================================
 	// Layout constraints
 	

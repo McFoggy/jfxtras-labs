@@ -49,8 +49,8 @@ import javafx.util.Callback;
  * An alternative is to register to the displayedCalendar property and upon change update the appointment collection.
  * A drawback of this approach is that you need to know what skin (day, week, ...) is active, so the correct set is provided, but most of the time this is known to the coder.
  * Therefore all skins are obligated to report the range they display via the calendarRangeCallback.
- * So if the calendar changes, the skin adapts and reports the new range via the callback, through which the coder can set the correct appointments. 
- *  
+ * So if the calendar changes, the skin adapts and reports the new range via the callback, through which the coder can set the correct appointments.
+ *
  * @author Tom Eugelink
  */
 public class Agenda extends Control
@@ -89,7 +89,10 @@ public class Agenda extends Control
 	
 	// ==================================================================================================================
 	// PROPERTIES
-	
+
+	/** Id */
+	public Agenda withId(String value) { setId(value); return this; }
+
 	/** Appointments: */
 	public ObservableList<Appointment> appointments() { return appointments; }
 	final private ObservableList<Appointment> appointments =  javafx.collections.FXCollections.observableArrayList();

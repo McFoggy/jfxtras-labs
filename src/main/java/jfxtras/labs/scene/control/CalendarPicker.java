@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -46,7 +47,8 @@ import javafx.util.Callback;
 import jfxtras.labs.scene.control.Agenda.CalendarRange;
 
 /**
- * Calendar picker component
+ * = Calendar picker component
+ *
  * The calendar is (and should) be treated as immutable. That means the setter of Calendar is not used to modify its value, but each time a new instance (clone) is put in the calendar property.
  * So you cannot rely that exactly the same Calendar object that was set or added will be stored and returned.
  * 
@@ -78,7 +80,7 @@ public class CalendarPicker extends Control
 		constructCalendar();
 		constructCalendars();
 		constructLocale();
-//		constructMode();
+		constructDisplayedCalendar();
 	}
 
 	/**
@@ -91,7 +93,10 @@ public class CalendarPicker extends Control
 	
 	// ==================================================================================================================
 	// PROPERTIES
-	
+
+	/** Id */
+	public CalendarPicker withId(String value) { setId(value); return this; }
+
 	/** calendar: */
 	final private ObjectProperty<Calendar> calendarObjectProperty = new SimpleObjectProperty<Calendar>(this, "calendar")
 	{
@@ -114,12 +119,14 @@ public class CalendarPicker extends Control
 			@Override
 			public void changed(ObservableValue<? extends Calendar> observableValue, Calendar oldValue, Calendar newValue)
 			{
-				// if the new value is set to null, remove the old value
-				if (newValue != null && calendars().contains(newValue) == false) {
-					calendars().add(newValue);
-				}
-				if (oldValue != null) {
-					calendars().remove(oldValue);
+				if (modifyingCalendersAtomicInteger.get() == 0) {
+					// if the new value is set to null, remove the old value
+					if (newValue != null && calendars().contains(newValue) == false) {
+						calendars().add(newValue);
+					}
+					if (oldValue != null) {
+						calendars().remove(oldValue);
+					}
 				}
 			} 
 		});
@@ -137,24 +144,33 @@ public class CalendarPicker extends Control
 			@Override
 			public void onChanged(javafx.collections.ListChangeListener.Change<? extends Calendar> change)
 			{
-				// if the active calendar is not longer in calendars, select another
-				if (!calendars().contains(getCalendar())) 
-				{
-					// if there are other left
-					if (calendars().size() > 0) 
-					{
-						// select the first
-						setCalendar( calendars().get(0) );
-					}
-					else 
-					{
-						// clear it
-						setCalendar(null);
+				modifyingCalendersAtomicInteger.addAndGet(1);
+				try {
+					// if this is an add
+					while (change.next()) {
+						for (Calendar lCalendar : change.getRemoved()) {
+							// if there are other left
+							if (calendars().size() > 0) {
+								// select the first
+								setCalendar( calendars().get(0) );
+							}
+							else  {
+								// clear it
+								setCalendar(null);
+							}
+						}
+						for (Calendar lCalendar : change.getAddedSubList()) {
+							setCalendar( lCalendar );
+						}
 					}
 				}
-			} 
+				finally {
+					modifyingCalendersAtomicInteger.addAndGet(-1);
+				}
+			}
 		});
 	}
+	final private AtomicInteger modifyingCalendersAtomicInteger = new AtomicInteger(0);
 
 	/** Locale: the locale is used to determine first-day-of-week, weekday labels, etc */
 	public ObjectProperty<Locale> localeProperty() { return localeObjectProperty; }
@@ -195,22 +211,6 @@ public class CalendarPicker extends Control
 	public Mode getMode() { return modeObjectProperty.getValue(); }
 	public void setMode(Mode value) { modeObjectProperty.setValue(value); }
 	public CalendarPicker withMode(Mode value) { setMode(value); return this; } 
-	// construct property
-//	private void constructMode()
-//	{
-//		// if this value is changed by binding, make sure related things are updated
-//		modeProperty().addListener(new ChangeListener<Mode>()
-//		{
-//			@Override
-//			public void changed(ObservableValue<? extends Mode> observableValue, Mode oldValue, Mode newValue)
-//			{
-//				// update the collection; remove excessive calendars
-//				while (getMode() == Mode.SINGLE && calendars().size() > 1) {
-//					calendars().remove(calendars().size() - 1);
-//				}
-//			} 
-//		});
-//	}
 
 	/** ShowTime: only applicable in SINGLE mode */
 	public ObjectProperty<Boolean> showTimeProperty() { return showTimeObjectProperty; }
@@ -270,6 +270,22 @@ public class CalendarPicker extends Control
 		
 		public Calendar getEndCalendar() { return end; }
 		final Calendar end; 
+	}
+
+	/**
+	 * DisplayedCalendar:
+	 * Yoy may set this value, but it is also overwritten by other logic and the skin. Do not assume you have total control.
+	 * The calendar should not be modified using any of its add or set methods (it should be considered immutable)
+	 */
+	public ObjectProperty<Calendar> displayedCalendar() { return displayedCalendarObjectProperty; }
+	volatile private ObjectProperty<Calendar> displayedCalendarObjectProperty = new SimpleObjectProperty<Calendar>(this, "displayedCalendar");
+	public Calendar getDisplayedCalendar() { return displayedCalendarObjectProperty.getValue(); }
+	public void setDisplayedCalendar(Calendar value) { displayedCalendarObjectProperty.setValue(value); }
+	public CalendarPicker withDisplayedCalendar(Calendar value) { setDisplayedCalendar(value); return this; }
+	private void constructDisplayedCalendar()
+	{
+		// init here, so deriveDisplayedCalendar in the skin will modify it accordingly
+		setDisplayedCalendar(Calendar.getInstance(getLocale()));
 	}
 
 	// ==================================================================================================================
